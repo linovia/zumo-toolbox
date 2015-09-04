@@ -1,3 +1,4 @@
+from struct import pack, unpack
 import serial
 import time
 import logging
@@ -33,5 +34,13 @@ def blink():
 
 class Zumo(object):
     logger = logging.getLogger(__name__)
+    PACKET_SIZE = 4
+
+    def send_data(self, data):
+        trailing_size = self.PACKET_SIZE - len(data)
+        data = data + b'\x00' * trailing_size
+        arduino.write(data)
 
     def led(self, on=False):
+        data = pack('>BB', 2, int(on))
+        self.send_data(data)
