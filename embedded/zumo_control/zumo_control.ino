@@ -50,10 +50,13 @@ void loop() {
         }
         break;
       case 0x04:
-        speed = (inputBuffer[1]) + (inputBuffer[2] << 8);
+        speed = (inputBuffer[1] << 8) + (inputBuffer[2]);
         motors.setLeftSpeed(speed);
         Serial.write(inputBuffer[1]);
         Serial.write(inputBuffer[2]);
+        Serial.write(highByte(speed));
+        Serial.write(lowByte(speed));
+        speed = 200;
         Serial.write(highByte(speed));
         Serial.write(lowByte(speed));
         break;
