@@ -5,12 +5,20 @@ import logging
 from datetime import datetime
 
 
-PORT = "/dev/cu.usbmodemfd121"
+PORT = "/dev/cu.usbmodem1421"
+logger = logging.getLogger(__name__)
 
 arduino = serial.Serial(PORT, 115200, timeout=1)
+# arduino = serial.Serial(PORT, 9600, timeout=1)
 time.sleep(5)  # give the connection a second to settle
 
 status = True
+
+
+def echo(chr):
+    arduino.write(b"\x01" + chr + b"\x00\x00")
+    result = arduino.read()
+    print(result)
 
 
 def blink():
@@ -27,20 +35,42 @@ def blink():
         result = arduino.read()
         print('Result: %s %s' % (result.decode('utf8'), type(result)))
 
-    # arduino.write(b"\x01\x00\x00\x00")
-    # result = arduino.read()
-    # print('Ping: %s %s' % (result.decode('utf8'), type(result)))
+
+LEFT_MOTOR = 0x04
+RIGHT_MOTOR = 0x08
 
 
 class Zumo(object):
-    logger = logging.getLogger(__name__)
     PACKET_SIZE = 4
 
     def send_data(self, data):
         trailing_size = self.PACKET_SIZE - len(data)
         data = data + b'\x00' * trailing_size
         arduino.write(data)
+        print('Sent: %s' % str(data))
+
+    def echo(self, chr):
+        """
+        Returns a single byte.
+        """
+        data = pack('>Bxxx', chr)
+        self.send_data(data)
+        result = arduino.read(2)
+        print(result)
 
     def led(self, on=False):
-        data = pack('>BB', 2, int(on))
+        """
+        Turns `on` the LED.
+        """
+        data = pack('>BBxx', 2, int(on))
         self.send_data(data)
+
+    def motor(self, speed=0, left=False, right=False):
+        """
+        Set `left` and/or `right` motors at `speed`
+        """
+        select = (LEFT_MOTOR if left else 0) | (RIGHT_MOTOR if right else 0)
+        data = pack('>Bhx', select, speed)
+        self.send_data(data)
+        print(arduino.read(2))
+        print(arduino.read(2))

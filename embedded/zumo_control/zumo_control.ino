@@ -18,8 +18,6 @@
 #define LED_PIN 13
 
 ZumoMotors motors;
-char inputBuffer[5];
-
 
 void setup() {
   Serial.begin(115200);
@@ -27,12 +25,10 @@ void setup() {
 }
 
 
-int getSpeed(inputBuffer) {
-  return inputBuffer[1] << 8 + inputBuffer[2];
-}
-
-
 void loop() {
+  char inputBuffer[8];
+  int speed;
+
   if(Serial.available() >= 4) {
     Serial.readBytes(inputBuffer, 4);
     
@@ -44,18 +40,31 @@ void loop() {
     // 0x0C: Both motors
     switch(inputBuffer[0]) {
       case 0x01:
-        Serial.print(1);
+        Serial.write(inputBuffer[1]);
         break;
       case 0x02:
         if (inputBuffer[1] == 1) {
-          digitalWrite(LED_PIN, LOW);
-        } else {
           digitalWrite(LED_PIN, HIGH);
+        } else {
+          digitalWrite(LED_PIN, LOW);
         }
+        break;
+      case 0x04:
+        speed = (inputBuffer[1]) + (inputBuffer[2] << 8);
+        motors.setLeftSpeed(speed);
+        Serial.write(inputBuffer[1]);
+        Serial.write(inputBuffer[2]);
+        Serial.write(highByte(speed));
+        Serial.write(lowByte(speed));
+        break;
+      case 0x08:
+        speed = (inputBuffer[1] << 8) + inputBuffer[2];
+        motors.setRightSpeed(speed);
+        break;
       case 0x0C:
-        int speed;
-        speed = inputBuffer[2] << 8 + inputBuffer[3];
+        speed = (inputBuffer[1] << 8) + inputBuffer[2];
         motors.setSpeeds(speed, speed);
+        break;
     }
   }
 }

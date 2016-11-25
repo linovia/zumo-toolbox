@@ -7,3 +7,8 @@ This is splited into two parts:
 - an arduino application that runs on the robot itself and communicate with a computer.
 - a Python controler that runs on a computer and communicate with the Zumo through USB.
 
+
+
+# Partie Python
+
+$ pip install pyserial
